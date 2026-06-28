@@ -16,4 +16,8 @@ export const env = {
   cookieDomain: process.env.COOKIE_DOMAIN || "localhost",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
   otpMock: process.env.OTP_MOCK || "123456",
+  awsRegion: process.env.AWS_REGION || "ap-south-1",
+  s3Bucket: process.env.S3_BUCKET,
+  s3PresignExpires: Number(process.env.S3_PRESIGN_EXPIRES) || 300,
+  gpsToleranceM: Number(process.env.GPS_TOLERANCE_METERS) || 500,
 };

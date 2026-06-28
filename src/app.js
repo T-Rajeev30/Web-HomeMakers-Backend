@@ -5,6 +5,7 @@ import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
 import { notFound, errorHandler } from "./middlewares/error.js";
 import onboardingRoutes from "./routes/onboarding.routes.js";
+import uploadRoutes from "./routes/uploads.routes.js";
 
 export function createApp() {
   const app = express();
@@ -16,6 +17,7 @@ export function createApp() {
   app.use("/api/auth", authRoutes);
 
   app.use("/api/onboarding", onboardingRoutes);
+  app.use("/api/uploads", uploadRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
