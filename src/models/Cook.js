@@ -26,8 +26,8 @@ const cookSchema = new Schema(
       default: "draft",
       index: true,
     },
+    role: { type: String, enum: ["cook", "admin"], default: "cook" },
     currentStep: { type: Number, default: 1 },
-
     personal: { name: String, gender: String },
     address: { building: String, locality: String, pincode: String },
     tax: {
@@ -68,6 +68,7 @@ const cookSchema = new Schema(
       decision: String,
       decided_at: Date,
       decided_by: String,
+      note: String,
     },
     consent: { terms_accepted_at: Date, privacy_accepted_at: Date, ip: String },
   },
