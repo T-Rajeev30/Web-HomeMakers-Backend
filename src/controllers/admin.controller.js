@@ -21,7 +21,7 @@ export async function cookDetail(req, res, next) {
 export async function decide(req, res, next) {
   try {
     const body = decisionSchema.parse(req.body);
-    res.json(await svc.decideCook(req.params.id, req.user.sub, body));
+    res.json(await svc.decideCook(req.params.id, req.user.id, body));
   } catch (e) {
     next(e);
   }
