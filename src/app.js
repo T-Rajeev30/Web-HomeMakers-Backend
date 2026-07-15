@@ -7,6 +7,10 @@ import { notFound, errorHandler } from "./middlewares/error.js";
 import onboardingRoutes from "./routes/onboarding.routes.js";
 import uploadRoutes from "./routes/uploads.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import menuRoutes from "./routes/menu.routes.js";
+import publicRoutes from "./routes/public.routes.js";
+import orderRoutes from "./routes/order.routes.js";
+import cookOrdersRoutes from "./routes/cookOrders.routes.js";
 
 export function createApp() {
   const app = express();
@@ -24,5 +28,9 @@ export function createApp() {
 
   app.use(notFound);
   app.use(errorHandler);
+  app.use("/api/menu", menuRoutes);
+  app.use("/api/public", publicRoutes);
+  app.use("/api/orders", orderRoutes);
+  app.use("/api/cook/orders", cookOrdersRoutes);
   return app;
 }
