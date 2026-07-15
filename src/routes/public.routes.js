@@ -1,0 +1,8 @@
+import { Router } from "express";
+import * as ctrl from "../controllers/public.controller.js";
+
+const router = Router();
+router.get("/cooks", ctrl.listCooks);
+router.get("/cooks/:id/menu", ctrl.getCookMenu);
+
+export default router;
