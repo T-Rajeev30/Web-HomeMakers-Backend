@@ -16,7 +16,18 @@ export function createApp() {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
-  app.use(cors({ origin: env.clientOrigin, credentials: true }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || env.clientOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
+    }),
+  );
 
   app.get("/api/health", (req, res) => res.json({ ok: true }));
   app.use("/api/auth", authRoutes);

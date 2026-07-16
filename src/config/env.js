@@ -14,7 +14,13 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpires: process.env.JWT_EXPIRES || "7d",
   cookieDomain: process.env.COOKIE_DOMAIN || "localhost",
-  clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  clientOrigins: (
+    process.env.CLIENT_ORIGINS ||
+    process.env.CLIENT_ORIGIN ||
+    "http://localhost:5173"
+  )
+    .split(",")
+    .map((o) => o.trim()),
   otpMock: process.env.OTP_MOCK || "123456",
   awsRegion: process.env.AWS_REGION || "ap-south-1",
   s3Bucket: process.env.S3_BUCKET,
