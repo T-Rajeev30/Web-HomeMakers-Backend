@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { approvalEmailHtml } from "../templates/approvalEmail.template.js";
-
+import { reminderEmailHtml } from "../templates/reminderEmail.template.js";
 // Required .env vars:
 //   RESEND_API_KEY   — from your Resend dashboard
 //   RESEND_FROM_EMAIL — e.g. "Zingro <notifications@zingro.in>"
@@ -53,5 +53,49 @@ export async function sendApprovalEmail(cook) {
       `Failed to send approval email to ${cook.email} (cook ${cook._id}):`,
       e.message,
     );
+  }
+}
+
+export async function sendReminderEmail(cook) {
+  if (!cook.email) {
+    console.warn(
+      `Skipping reminder email for cook ${cook._id} — no email on file.`,
+    );
+    return { sent: false, reason: "no_email" };
+  }
+
+  const dashboardUrl =
+    process.env.DASHBOARD_URL || "https://zingro.in/dashboard";
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "Zingro <onboarding@resend.dev>",
+      to: cook.email,
+      subject: "Finish setting up your kitchen on Zingro",
+      html: reminderEmailHtml({
+        cookName: cook.personal?.name,
+        currentStep: cook.currentStep,
+        dashboardUrl,
+      }),
+    });
+
+    if (error) {
+      console.error(
+        `Resend rejected reminder email to ${cook.email} (cook ${cook._id}):`,
+        JSON.stringify(error),
+      );
+      return { sent: false, reason: "resend_error" };
+    }
+
+    console.log(
+      `Reminder email sent to ${cook.email} (cook ${cook._id}), Resend id: ${data?.id}`,
+    );
+    return { sent: true };
+  } catch (e) {
+    console.error(
+      `Failed to send reminder email to ${cook.email} (cook ${cook._id}):`,
+      e.message,
+    );
+    return { sent: false, reason: "exception" };
   }
 }

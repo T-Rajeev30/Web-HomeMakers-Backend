@@ -9,5 +9,5 @@ router.use(requireAuth, requireAdmin);
 router.get("/cooks", ctrl.listCooks);
 router.get("/cooks/:id", ctrl.cookDetail);
 router.post("/cooks/:id/decision", ctrl.decide);
-
+router.post("/cooks/:id/remind", ctrl.remind);
 export default router;

@@ -26,3 +26,11 @@ export async function decide(req, res, next) {
     next(e);
   }
 }
+
+export async function remind(req, res, next) {
+  try {
+    res.json(await svc.sendCookReminder(req.params.id));
+  } catch (e) {
+    next(e);
+  }
+}

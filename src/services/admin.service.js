@@ -1,8 +1,7 @@
 import { Cook } from "../models/Cook.js";
 import { presignGet } from "./s3.service.js";
 import { decideKyc } from "./kyc.service.js";
-import { sendApprovalEmail } from "./mail.service.js";
-
+import { sendApprovalEmail, sendReminderEmail } from "./mail.service.js";
 const LIST_FIELDS =
   "phone email status currentStep personal.name food.cuisine kyc.name_match_score kyc.decision aadhaar.status createdAt updatedAt";
 
@@ -66,4 +65,27 @@ export async function decideCook(id, adminId, { decision, note }) {
   }
 
   return { id: cook._id, status: cook.status, decision };
+}
+
+export async function sendCookReminder(id) {
+  const cook = await Cook.findById(id).lean();
+  if (!cook) throw Object.assign(new Error("Cook not found"), { status: 404 });
+  if (cook.status !== "draft")
+    throw Object.assign(
+      new Error("Reminder only applies to cooks still in draft"),
+      {
+        status: 409,
+      },
+    );
+
+  const result = await sendReminderEmail(cook);
+  if (!result.sent) {
+    throw Object.assign(
+      new Error(`Could not send reminder: ${result.reason}`),
+      {
+        status: 502,
+      },
+    );
+  }
+  return { id: cook._id, sent: true };
 }
