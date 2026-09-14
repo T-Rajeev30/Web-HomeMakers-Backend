@@ -2,8 +2,9 @@ import { Cook } from "../models/Cook.js";
 import { presignGet } from "./s3.service.js";
 import { decideKyc } from "./kyc.service.js";
 import { sendApprovalEmail, sendReminderEmail } from "./mail.service.js";
+
 const LIST_FIELDS =
-  "phone email status currentStep personal.name food.cuisine kyc.name_match_score kyc.decision aadhaar.status createdAt updatedAt";
+  "phone email status currentStep personal.name food.cuisine kyc.name_match_score kyc.decision aadhaar.status createdAt updatedAt reminderCount";
 
 export async function listCooks({ status, page, limit }) {
   const filter = status ? { status } : {};
@@ -23,16 +24,12 @@ export async function getCookDetail(id) {
   const cook = await Cook.findById(id).select("-passwordHash -otp").lean();
   if (!cook) throw Object.assign(new Error("Cook not found"), { status: 404 });
 
-  // Presign photo URLs for review (private bucket).
   const photos = {};
   if (cook.photos?.kitchen_s3_key)
     photos.kitchen = await presignGet(cook.photos.kitchen_s3_key);
   if (cook.photos?.profile_s3_key)
     photos.profile = await presignGet(cook.photos.profile_s3_key);
 
-  // Computed verdict — same threshold/logic the system actually uses to
-  // decide approval, so the admin sees the real automated decision instead
-  // of eyeballing raw fields and guessing.
   const kycVerdict = decideKyc(cook);
 
   return { ...cook, photoUrls: photos, kycVerdict };
@@ -56,8 +53,6 @@ export async function decideCook(id, adminId, { decision, note }) {
   };
   await cook.save();
 
-  // Fire-and-forget — never let email delivery block or delay the admin's
-  // approval response. Failures are logged inside sendApprovalEmail itself.
   if (decision === "approved") {
     sendApprovalEmail(cook).catch((e) =>
       console.error("Unexpected error sending approval email:", e),
@@ -73,19 +68,25 @@ export async function sendCookReminder(id) {
   if (cook.status !== "draft")
     throw Object.assign(
       new Error("Reminder only applies to cooks still in draft"),
-      {
-        status: 409,
-      },
+      { status: 409 },
     );
 
   const result = await sendReminderEmail(cook);
   if (!result.sent) {
     throw Object.assign(
       new Error(`Could not send reminder: ${result.reason}`),
-      {
-        status: 502,
-      },
+      { status: 502 },
     );
   }
-  return { id: cook._id, sent: true };
+
+  const updated = await Cook.findByIdAndUpdate(
+    id,
+    {
+      $inc: { reminderCount: 1 },
+      $set: { lastReminderAt: new Date() },
+    },
+    { new: true },
+  ).lean();
+
+  return { id: cook._id, sent: true, reminderCount: updated.reminderCount };
 }

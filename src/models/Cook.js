@@ -25,6 +25,8 @@ const cookSchema = new Schema(
       index: true,
     },
     currentStep: { type: Number, default: 1 },
+    reminderCount: { type: Number, default: 0 },
+    lastReminderAt: { type: Date, default: null },
     personal: { name: String, gender: String },
     address: { building: String, locality: String, pincode: String },
     tax: {
@@ -49,7 +51,7 @@ const cookSchema = new Schema(
       verified_at: Date,
       ocr_name: String,
       ocr_dob: String,
-      identity_match_score: Number, // 0..1, from utils/nameMatch.js
+      identity_match_score: Number, // 0..1, fromutils/nameMatch.js
     },
     bank: {
       masked: String,
