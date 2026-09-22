@@ -40,9 +40,14 @@ export async function confirmUpload(cookId, type, key) {
     result.distanceMeters = Math.round(dist);
   }
 
-  const field =
-    type === "kitchen" ? "photos.kitchen_s3_key" : "photos.profile_s3_key";
-  await Cook.updateOne({ _id: cookId }, { $set: { [field]: key } });
+  const fieldByType = {
+    kitchen: "photos.kitchen_s3_key",
+    profile: "photos.profile_s3_key",
+  };
+  const field = fieldByType[type];
+  if (field) {
+    await Cook.updateOne({ _id: cookId }, { $set: { [field]: key } });
+  }
 
   return result;
 }

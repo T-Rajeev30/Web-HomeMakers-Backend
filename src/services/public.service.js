@@ -4,7 +4,7 @@ import { isOpenNow } from "../utils/isOpenNow.js";
 import { presignGet } from "./s3.service.js";
 
 const PUBLIC_COOK_FIELDS =
-  "personal.name food.cuisine food.category food.description food.radius photos.gps status location ratingAvg ratingCount hours";
+  "personal.name food.cuisine food.category food.description food.radius photos.gps status locationratingAvg ratingCount hours";
 
 export async function listCooks({
   lat,
@@ -62,7 +62,9 @@ export async function getCookMenu(cookId) {
   if (!cook) throw Object.assign(new Error("Cook not found"), { status: 404 });
 
   const dishes = await Dish.find({ cookId, available: true })
-    .select("name category categoryId price desc tag image_s3_key ratingAvg ratingCount spicyLevel discount")
+    .select(
+      "cookId name category categoryId price desc tag image_s3_key ratingAvg ratingCount spicyLevel discount",
+    )
     .populate("categoryId", "mealType name")
     .lean();
 
@@ -81,20 +83,21 @@ export async function getCookMenu(cookId) {
     grouped[mealType].push(d);
   }
 
-  return { cook: { ...cook.toObject(), isOpenNow: isOpenNow(cook.hours) }, menu: grouped };
+  return {
+    cook: { ...cook.toObject(), isOpenNow: isOpenNow(cook.hours) },
+    menu: grouped,
+  };
 }
 
 export async function listCuisines() {
   return Cook.distinct("food.cuisine", { status: "approved" });
 }
 
-
-
-
-
 export async function getDishById(dishId) {
   const dish = await Dish.findOne({ _id: dishId, available: true })
-    .select("name category categoryId price desc tag image_s3_key ratingAvg ratingCount spicyLevel discount cookId")
+    .select(
+      "cookId name category categoryId price desc tag image_s3_key ratingAvg ratingCount spicyLevel discount",
+    )
     .populate("categoryId", "mealType name")
     .lean();
   if (!dish) throw Object.assign(new Error("Dish not found"), { status: 404 });
@@ -104,8 +107,14 @@ export async function getDishById(dishId) {
   }
   delete dish.image_s3_key;
 
-  const cook = await Cook.findOne({ _id: dish.cookId, status: "approved" }).select(PUBLIC_COOK_FIELDS);
-  if (!cook) throw Object.assign(new Error("Kitchen not found or unavailable"), { status: 404 });
+  const cook = await Cook.findOne({
+    _id: dish.cookId,
+    status: "approved",
+  }).select(PUBLIC_COOK_FIELDS);
+  if (!cook)
+    throw Object.assign(new Error("Kitchen not found or unavailable"), {
+      status: 404,
+    });
 
   return {
     ...dish,

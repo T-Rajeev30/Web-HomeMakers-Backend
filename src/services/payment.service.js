@@ -38,6 +38,8 @@ export async function createOrder({
     clusterDiscountPercent: breakdown.clusterDiscountPercent,
     orderType: breakdown.orderType,
     scheduledFor: breakdown.scheduledFor,
+    appliedCouponId: breakdown.appliedCoupon?.couponId || null,
+    couponDiscount: breakdown.couponDiscount || 0,
     deliveryAddress: {
       building: address.line1,
       locality: address.city,
@@ -101,11 +103,11 @@ export async function verifyPayment({
 
   const order = await Order.findByIdAndUpdate(
     payment.orderId,
-    {},
+    { status: "accepted" },
     { new: true },
   );
 
-  if (couponCode) {
+  if (order.appliedCouponId) {
     await couponSvc.apply({
       couponId: order.appliedCouponId,
       userId,
@@ -114,7 +116,7 @@ export async function verifyPayment({
     });
   }
 
-  await createPayoutForOrder(order); // writes PayoutLedger entry, held or settle-now per cook's schedule
+  await createPayoutForOrder(order);
 
   return { orderId: order._id, status: "paid" };
 }

@@ -4,9 +4,20 @@ import { Dish } from "../models/Dish.js";
 import Category from "../models/Category.js";
 import { Order } from "../models/Order.js";
 import { isOpenNow } from "../utils/isOpenNow.js";
+import { presignGet } from "./s3.service.js";
 
 const PUBLIC_COOK_FIELDS =
   "personal.name food.cuisine food.category food.description status location ratingAvg ratingCount hours";
+
+async function withImageUrls(dishes) {
+  return Promise.all(
+    dishes.map(async (d) => {
+      if (d.image_s3_key) d.imageUrl = await presignGet(d.image_s3_key);
+      delete d.image_s3_key;
+      return d;
+    }),
+  );
+}
 
 export async function getHome(customerId, { lat, lng, addressId } = {}) {
   let currentAddress = null;
@@ -54,23 +65,27 @@ export async function getHome(customerId, { lat, lng, addressId } = {}) {
     .limit(6)
     .lean();
 
-  const popularMeals = await Dish.find({ available: true })
+  const popularMealsRaw = await Dish.find({ available: true })
     .select(
       "name category price desc tag image_s3_key ratingAvg ratingCount cookId",
     )
     .sort({ ratingCount: -1 })
     .limit(10)
     .lean();
+  const popularMeals = await withImageUrls(popularMealsRaw);
 
   const categories = await Category.find({ isActive: true })
     .sort({ displayOrder: 1 })
     .lean();
 
-  const trending = await Dish.find({ available: true })
-    .select("name category price desc tag ratingAvg ratingCount cookId")
+  const trendingRaw = await Dish.find({ available: true })
+    .select(
+      "name category price desc tag image_s3_key ratingAvg ratingCount cookId",
+    )
     .sort({ createdAt: -1 })
     .limit(10)
     .lean();
+  const trending = await withImageUrls(trendingRaw);
 
   let recentlyOrdered = [];
   if (customerId) {
@@ -99,17 +114,14 @@ export async function getHome(customerId, { lat, lng, addressId } = {}) {
     })),
     popularMeals,
     categories,
-    offers: [], // stub â€” Offers module not built
-    subscriptions: [], // stub â€” Subscriptions module not built
-    recommended: [], // stub â€” needs a real recommendation strategy
+    offers: [], // stub — Offers module not built
+    subscriptions: [], // stub — Subscriptions module not built
+    recommended: [], // stub — needs a real recommendation strategy
     trending,
-    communityBanner: [], // stub â€” Banner model not built
-    promotionalBanner: [], // stub â€” Banner model not built
+    communityBanner: [], // stub — Banner model not built
+    promotionalBanner: [], // stub — Banner model not built
     quickFilters: ["veg", "non-veg", "rating 4+", "under Rs 200"], // static for now
     recentlyOrdered,
     continueSubscription: null, // stub - Subscriptions not built
   };
 }
-
-
-

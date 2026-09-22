@@ -63,9 +63,15 @@ const orderSchema = new Schema(
       phone: { type: String, default: null },
       trackingId: { type: String, default: null },
     },
+    appliedCouponId: {
+      type: Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+    },
+    couponDiscount: { type: Number, default: 0 },
   },
+
   { timestamps: true },
 );
 
 export const Order = mongoose.model("Order", orderSchema);
-

@@ -1,5 +1,6 @@
 ﻿import { Dish } from "../models/Dish.js";
 import { Cook } from "../models/Cook.js";
+import { presignGet } from "./s3.service.js";
 
 export async function search({
   q,
@@ -46,14 +47,27 @@ export async function search({
   )
     .sort(dishSort)
     .skip(skip)
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
 
-  const [dishes, dishTotal, cooks, cookTotal] = await Promise.all([
+  const [dishesRaw, dishTotal, cooks, cookTotal] = await Promise.all([
     dishQuery,
     Dish.countDocuments(dishFilter),
-    Cook.find(cookFilter).select("personal.name food.cuisine food.category food.description status location ratingAvg ratingCount").limit(10),
+    Cook.find(cookFilter)
+      .select(
+        "personal.name food.cuisine food.category food.description status location ratingAvg ratingCount",
+      )
+      .limit(10),
     Cook.countDocuments(cookFilter),
   ]);
+
+  const dishes = await Promise.all(
+    dishesRaw.map(async (d) => {
+      if (d.image_s3_key) d.imageUrl = await presignGet(d.image_s3_key);
+      delete d.image_s3_key;
+      return d;
+    }),
+  );
 
   return {
     dishes: {
@@ -65,4 +79,3 @@ export async function search({
     cooks: { items: cooks, total: cookTotal },
   };
 }
-

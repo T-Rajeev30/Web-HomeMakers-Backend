@@ -20,10 +20,11 @@ const PaymentSchema = new mongoose.Schema(
     currency: { type: String, default: "INR" },
     status: {
       type: String,
-      enum: ["created", "paid", "failed"],
+      enum: ["created", "paid", "failed", "refunded"],
       default: "created",
     },
     failureReason: { type: String },
+    refundId: { type: String, default: null },
   },
   { timestamps: true },
 );

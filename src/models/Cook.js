@@ -130,3 +130,4 @@ cookSchema.add({
   },
 });
 export const Cook = mongoose.model("Cook", cookSchema);
+ 

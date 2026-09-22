@@ -9,7 +9,12 @@ import crypto from "crypto";
 
 const s3 = new S3Client({ region: env.awsRegion }); // IAM role on EC2
 
-const PREFIX = { kitchen: "kitchen", profile: "profile", dish: "dish" };
+const PREFIX = {
+  kitchen: "kitchen",
+  profile: "profile",
+  dish: "dish",
+  orderReady: "order-ready",
+};
 export function buildKey(cookId, type, contentType) {
   const ext = contentType === "image/png" ? "png" : "jpg";
   const rand = crypto.randomBytes(6).toString("hex");
